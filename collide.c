@@ -1,6 +1,6 @@
 /*
- * sprites.c
- * program which demonstrates GBA sprites
+ * collide.c
+ * program which demonstrates sprites colliding with tiles
  */
 
 #define SCREEN_WIDTH 240
@@ -325,10 +325,16 @@ struct Samus {
 	/* the actual sprite attribute info */
 	struct Sprite* sprite;
 
-	/* the x and y postion */
+	/* the x and y postion, in 1/256 pixels */
 	int x, y;
 
-	/* which frame of the animation she is on */
+	/* the samus's y velocity in 1/256 pixels/second */
+	int yvel;
+
+	/* the samus's y acceleration in 1/256 pixels/second^2 */
+	int gravity; 
+
+	/* which frame of the animation he is on */
 	int frame;
 
 	/* the number of frames to wait before flipping */
@@ -342,32 +348,38 @@ struct Samus {
 
 	/* the number of pixels away from the edge of the screen the samus stays */
 	int border;
+
+	/* if the samus is currently falling */
+	int falling;
 };
 
 /* initialize the samus */
 void samus_init(struct Samus* samus) {
-	samus->x = 100;
-	samus->y = 113;
+	samus->x = 100 << 8;
+	samus->y = 113 << 8;
+	samus->yvel = 0;
+	samus->gravity = 50;
 	samus->border = 40;
 	samus->frame = 0;
 	samus->move = 0;
 	samus->counter = 0;
-	samus->animation_delay = 4;
-	samus->sprite = sprite_init(samus->x, samus->y, SIZE_32_32, 0, 0, samus->frame, 0);
+	samus->falling = 0;
+	samus->animation_delay = 5;
+	samus->sprite = sprite_init(samus->x >> 8, samus->y >> 8, SIZE_32_32, 0, 0, samus->frame, 0);
 }
 
-/* move samus left or right returns if she is at edge of the screen */
+/* move the samus left or right returns if it is at edge of the screen */
 int samus_left(struct Samus* samus) {
 	/* face left */
 	sprite_set_horizontal_flip(samus->sprite, 1);
 	samus->move = 1;
 
 	/* if we are at the left end, just scroll the screen */
-	if (samus->x < samus->border) {
+	if ((samus->x >> 8) < samus->border) {
 		return 1;
 	} else {
 		/* else move left */
-		samus->x--;
+		samus->x -= 256;
 		return 0;
 	}
 }
@@ -377,24 +389,110 @@ int samus_right(struct Samus* samus) {
 	samus->move = 1;
 
 	/* if we are at the right end, just scroll the screen */
-	if (samus->x > (SCREEN_WIDTH - 16 - samus->border)) {
+	if ((samus->x >> 8) > (SCREEN_WIDTH - 16 - samus->border)) {
 		return 1;
 	} else {
 		/* else move right */
-		samus->x++;
+		samus->x += 256;
 		return 0;
 	}
 }
 
+/* stop the samus from walking left/right */
 void samus_stop(struct Samus* samus) {
 	samus->move = 0;
-	samus->frame = 0;
+	if (samus->falling){
+		samus->frame = 64;
+	} else {
+		samus->frame = 0;
+	}
 	samus->counter = 7;
 	sprite_set_offset(samus->sprite, samus->frame);
 }
 
+/* start the samus jumping, unless already fgalling */
+void samus_jump(struct Samus* samus) {
+	if (!samus->falling) {
+		samus->yvel = -1000;
+		samus->falling = 1;
+	}
+}
+
+/* finds which tile a screen coordinate maps to, taking scroll into account */
+unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
+		const unsigned short* tilemap, int tilemap_w, int tilemap_h) {
+
+	/* adjust for the scroll */
+	x += xscroll;
+	y += yscroll;
+
+	/* convert from screen coordinates to tile coordinates */
+	x >>= 3;
+	y >>= 3;
+
+	/* account for wraparound */
+	while (x >= tilemap_w) {
+		x -= tilemap_w;
+	}
+	while (y >= tilemap_h) {
+		y -= tilemap_h;
+	}
+	while (x < 0) {
+		x += tilemap_w;
+	}
+	while (y < 0) {
+		y += tilemap_h;
+	}
+
+	/* lookup this tile from the map */
+	int index = y * tilemap_w + x;
+
+	/* return the tile */
+	return tilemap[index];
+}
+
+
 /* update the samus */
-void samus_update(struct Samus* samus) {
+void samus_update(struct Samus* samus, int xscroll) {
+	/* update y position and speed if falling */
+	if (samus->falling) {
+		samus->y += samus->yvel;
+		samus->yvel += samus->gravity;
+	}
+
+	/* check which tile the samus's feet are over */
+	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+	unsigned short tileOver = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+	unsigned short tileRight = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+
+	/* if it's block tile
+	 * these numbers refer to the tile indices of the blocks the samus can walk on */
+	if ((tileUnder >= 2 && tileUnder <= 9) || 
+		(tileUnder >= 12 && tileUnder <= 25) ||
+		(tileUnder >= 30 && tileUnder <= 35)) {
+		/* stop the fall! */
+		samus->falling = 0;
+		samus->yvel = 0;
+
+		/* make him line up with the top of a block
+		 * works by clearing out the lower bits to 0 */
+		samus->y &= ~0x7ff;
+
+		/* move him down one because there is a one pixel gap in the image */
+		samus->y++;
+
+	} else {
+		/* he is falling now */
+		samus->falling = 1;
+	}
+
+
+	/* update animation if moving */
 	if (samus->move) {
 		samus->counter++;
 		if (samus->counter >= samus->animation_delay) {
@@ -406,8 +504,12 @@ void samus_update(struct Samus* samus) {
 			samus->counter = 0;
 		}
 	}
-
-	sprite_position(samus->sprite, samus->x, samus->y);
+	if (samus->falling) {
+		samus->frame = 64;
+		sprite_set_offset(samus->sprite, samus->frame);
+	}
+	/* set on screen position */
+	sprite_position(samus->sprite, samus->x >> 8, samus->y >> 8);
 }
 
 /* the main function */
@@ -434,7 +536,7 @@ int main( ) {
 	/* loop forever */
 	while (1) {
 		/* update the samus */
-		samus_update(&samus);
+		samus_update(&samus, xscroll);
 
 		/* now the arrow keys move the samus */
 		if (button_pressed(BUTTON_RIGHT)) {
@@ -447,6 +549,11 @@ int main( ) {
 			}
 		} else {
 			samus_stop(&samus);
+		}
+
+		/* check for jumping */
+		if (button_pressed(BUTTON_A)) {
+			samus_jump(&samus);
 		}
 
 		/* wait for vblank before scrolling and moving sprites */
