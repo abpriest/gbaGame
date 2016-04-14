@@ -461,20 +461,20 @@ void samus_update(struct Samus* samus, int xscroll) {
 	}
 
 	/* check which tile the samus's feet are over */
-	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
-	unsigned short tileOver = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+	unsigned short tileOver = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8), xscroll,
 			0, map, map_width, map_height);
-	unsigned short tileRight = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+	unsigned short tileRight = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
-	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 32, xscroll,
+	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
 
 	/* if it's block tile
 	 * these numbers refer to the tile indices of the blocks the samus can walk on */
 	if ((tileUnder >= 2 && tileUnder <= 9) || 
 		(tileUnder >= 12 && tileUnder <= 25) ||
-		(tileUnder >= 30 && tileUnder <= 35)) {
+		(tileUnder >= 30 && tileUnder <= 35)){
 		/* stop the fall! */
 		samus->falling = 0;
 		samus->yvel = 0;
@@ -485,9 +485,13 @@ void samus_update(struct Samus* samus, int xscroll) {
 
 		/* move him down one because there is a one pixel gap in the image */
 		samus->y++;
-
+	} else if ( (tileUnder >= 2 && tileUnder <= 9) || 
+				(tileUnder >= 12 && tileUnder <= 25) ||
+				(tileUnder >= 30 && tileUnder <= 35)){
+		samus->falling = 1;
+		samus->yvel = 0;
 	} else {
-		/* he is falling now */
+		/* she is falling now */
 		samus->falling = 1;
 	}
 
