@@ -389,6 +389,7 @@ int samus_left(struct Samus* samus, int xscroll) {
 			return 0;
 		}
 	}
+	return 0;
 }
 int samus_right(struct Samus* samus, int xscroll) {
 	unsigned short tileRight = tile_lookup((samus->x >> 8) + 24, (samus->y >> 8), xscroll,
@@ -410,6 +411,7 @@ int samus_right(struct Samus* samus, int xscroll) {
 			return 0;
 		}
 	}
+	return 0;
 }
 
 /* stop the samus from walking left/right */
