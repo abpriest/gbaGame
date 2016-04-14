@@ -489,7 +489,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 				(tileOver >= 12 && tileOver <= 25) ||
 				(tileOver >= 30 && tileOver <= 35)){
 		samus->falling = 1;
-		samus->yvel = 0;
+		//samus->yvel = 0;
 	} else {
 		/* she is falling now */
 		samus->falling = 1;
