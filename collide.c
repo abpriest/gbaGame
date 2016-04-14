@@ -485,9 +485,9 @@ void samus_update(struct Samus* samus, int xscroll) {
 
 		/* move him down one because there is a one pixel gap in the image */
 		samus->y++;
-	} else if ( (tileUnder >= 2 && tileUnder <= 9) || 
-				(tileUnder >= 12 && tileUnder <= 25) ||
-				(tileUnder >= 30 && tileUnder <= 35)){
+	} else if ( (tileOver >= 2 && tileOver <= 9) || 
+				(tileOver >= 12 && tileOver <= 25) ||
+				(tileOver >= 30 && tileOver <= 35)){
 		samus->falling = 1;
 		samus->yvel = 0;
 	} else {
