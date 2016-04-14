@@ -467,6 +467,30 @@ unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
 	return tilemap[index];
 }
 
+int check_up(struct Samus* samus, int xscroll){
+	unsigned short tiles[5];
+	for(int i = 0; i < 5; i++){
+		if(i < 4){
+		tileup = tile_lookup((samus->x >> 8) + i*8, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+		} else {
+			tileup = tile_lookup((samus->x >> 8) + (i*8)-1, (samus->y >> 8), xscroll,
+				0, map, map_width, map_height);
+		}
+		if ( !((tileup >= 2 && tileLeft <= 9) || 
+			(tileup >= 12 && tileLeft <= 25) ||
+			(tileup >= 30 && tileLeft <= 35))){
+			tiles[i] = 0;
+		} else {
+			tiles[i] = 1;
+		}
+	}
+	int total = 1;
+	for(int i = 0; i < 5; i++){
+		total = total & tiles[i];
+	}
+	return ~total;
+}
 
 /* update the samus */
 void samus_update(struct Samus* samus, int xscroll) {
@@ -479,9 +503,6 @@ void samus_update(struct Samus* samus, int xscroll) {
 	/* check which tile the samus's feet are over */
 	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
-	unsigned short tileOver = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8), xscroll,
-			0, map, map_width, map_height);
-	
 	
 
 	/* if it's block tile
@@ -499,9 +520,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 
 		/* move him down one because there is a one pixel gap in the image */
 		samus->y++;
-	} else if ( (tileOver >= 2 && tileOver <= 9) || 
-				(tileOver >= 12 && tileOver <= 25) ||
-				(tileOver >= 30 && tileOver <= 35)){
+	} else if (check_up(samus, xscroll)){ 
 		samus->falling = 1;
 		samus->yvel = -samus->yvel;
 	}  else {
