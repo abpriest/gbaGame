@@ -369,33 +369,47 @@ void samus_init(struct Samus* samus) {
 }
 
 /* move the samus left or right returns if it is at edge of the screen */
-int samus_left(struct Samus* samus, int xscroll) {
-	    sprite_set_horizontal_flip(samus->sprite, 1);
-	    samus->move = 1;
-	
-	    /* if we are at the left end, just scroll the screen */
-	    if (samus->x < samus->border) {
-	        return 1;
-	    } else {
-	        /* else move left */
-	        samus->x--;
-	        return 0;
-	    }
-	return 0;
+int samus_left(struct Samus* samus) {
+	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+	if ( !((tileLeft >= 2 && tileLeft <= 9) || 
+		(tileLeft >= 12 && tileLeft <= 25) ||
+		(tileLeft >= 30 && tileLeft <= 35))){
+		
+		/* face left */
+		sprite_set_horizontal_flip(samus->sprite, 1);
+		samus->move = 1;
+			
+		/* if we are at the left end, just scroll the screen */
+		if ((samus->x >> 8) < samus->border) {
+			return 1;
+		} else {
+			/* else move left */
+			samus->x -= 256;
+			return 0;
+		}
+	}
 }
-int samus_right(struct Samus* samus, int xscroll) {
-	/* face right */
-    sprite_set_horizontal_flip(samus->sprite, 0);
-    samus->move = 1;
-
-    /* if we are at the right end, just scroll the screen */
-    if (samus->x > (SCREEN_WIDTH - 16 - samus->border)) {
-        return 1;
-    } else {
-        /* else move right */
-        samus->x++;
-        return 0;
-    }
+int samus_right(struct Samus* samus) {
+	unsigned short tileRight = tile_lookup((samus->x >> 8) + 24, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+	if ( !((tileRight >= 2 && tileRight <= 9) || 
+		(tileRight >= 12 && tileRight <= 25) ||
+		(tileRight >= 30 && tileRight <= 35))){
+			
+		/* face right */
+		sprite_set_horizontal_flip(samus->sprite, 0);
+		samus->move = 1;
+			
+		/* if we are at the right end, just scroll the screen */
+		if ((samus->x >> 8) > (SCREEN_WIDTH - 16 - samus->border)) {
+			return 1;
+		} else {
+			/* else move right */
+			samus->x += 256;
+			return 0;
+		}
+	}
 }
 
 /* stop the samus from walking left/right */
@@ -451,30 +465,6 @@ unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
 	return tilemap[index];
 }
 
-int check_up(struct Samus* samus, int xscroll){
-	unsigned short tiles[5];
-	for(int i = 0; i < 5; i++){
-		if(i < 4){
-		tileup = tile_lookup((samus->x >> 8) + i*8, (samus->y >> 8), xscroll,
-			0, map, map_width, map_height);
-		} else {
-			tileup = tile_lookup((samus->x >> 8) + (i*8)-1, (samus->y >> 8), xscroll,
-				0, map, map_width, map_height);
-		}
-		if ( !((tileup >= 2 && tileLeft <= 9) || 
-			(tileup >= 12 && tileLeft <= 25) ||
-			(tileup >= 30 && tileLeft <= 35))){
-			tiles[i] = 0;
-		} else {
-			tiles[i] = 1;
-		}
-	}
-	int total = 1;
-	for(int i = 0; i < 5; i++){
-		total = total & tiles[i];
-	}
-	return ~total;
-}
 
 /* update the samus */
 void samus_update(struct Samus* samus, int xscroll) {
@@ -487,6 +477,9 @@ void samus_update(struct Samus* samus, int xscroll) {
 	/* check which tile the samus's feet are over */
 	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
+	unsigned short tileOver = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+	
 	
 
 	/* if it's block tile
@@ -504,7 +497,9 @@ void samus_update(struct Samus* samus, int xscroll) {
 
 		/* move him down one because there is a one pixel gap in the image */
 		samus->y++;
-	} else if (check_up(samus, xscroll)){ 
+	} else if ( (tileOver >= 2 && tileOver <= 9) || 
+				(tileOver >= 12 && tileOver <= 25) ||
+				(tileOver >= 30 && tileOver <= 35)){
 		samus->falling = 1;
 		samus->yvel = -samus->yvel;
 	}  else {
@@ -561,11 +556,11 @@ int main( ) {
 
 		/* now the arrow keys move the samus */
 		if (button_pressed(BUTTON_RIGHT)) {
-			if (samus_right(&samus, xscroll)) {
+			if (samus_right(&samus)) {
 				xscroll++;
 			}
 		} else if (button_pressed(BUTTON_LEFT)) {
-			if (samus_left(&samus, xscroll)) {
+			if (samus_left(&samus)) {
 				xscroll--;
 			}
 		} else {
@@ -611,4 +606,3 @@ const intrp IntrTable[13] = {
 	interrupt_ignore,   /* DMA 3 interrupt */
 	interrupt_ignore,   /* Key interrupt */
 };
-
