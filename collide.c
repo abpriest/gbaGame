@@ -291,15 +291,12 @@ void sprite_set_vertical_flip(struct Sprite* sprite, int vertical_flip) {
 	}
 }
 
+unsigned short horizontal(unsigned short attribute, int flip);
+
 /* change the vertical flip flag */
 void sprite_set_horizontal_flip(struct Sprite* sprite, int horizontal_flip) {
-	if (horizontal_flip) {
-		/* set the bit */
-		sprite->attribute1 |= 0x1000;
-	} else {
-		/* clear the bit */
-		sprite->attribute1 &= 0xefff;
-	}
+	unsigned short attribute = sprite->attribute1;
+	sprite->attribute1 = horizontal(attribute, horizontal_flip);
 }
 
 /* change the tile offset of a sprite */
