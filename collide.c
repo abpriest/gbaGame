@@ -296,7 +296,7 @@ unsigned short horizontal(unsigned short attribute, int flip, unsigned short con
 /* change the vertical flip flag */
 void sprite_set_horizontal_flip(struct Sprite* sprite, int horizontal_flip) {
 	unsigned short attribute = sprite->attribute1;
-	unsigned short constant = 0xefff
+	unsigned short constant = 0xefff;
 	sprite->attribute1 = horizontal(attribute, horizontal_flip, constant);
 }
 
