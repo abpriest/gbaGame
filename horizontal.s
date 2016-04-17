@@ -6,7 +6,8 @@ horizonal:
         mov r2, r0  @pass sprite->attribute1 to a variable into the assembly function
         cmp r1, #1  @if
         beq .set   
-        and r3, r2, #0xefff
+        mov r1, #0xefff
+        and r3, r2, r1
         mov r2, r3
         b .done
     .set:
