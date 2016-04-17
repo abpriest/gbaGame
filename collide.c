@@ -280,23 +280,21 @@ void sprite_move(struct Sprite* sprite, int dx, int dy) {
 	sprite_position(sprite, x + dx, y + dy);
 }
 
+unsigned short vertical(unsigned short attribute, int flip, unsigned short constant);
+
 /* change the vertical flip flag */
 void sprite_set_vertical_flip(struct Sprite* sprite, int vertical_flip) {
-	if (vertical_flip) {
-		/* set the bit */
-		sprite->attribute1 |= 0x2000;
-	} else {
-		/* clear the bit */
-		sprite->attribute1 &= 0xdfff;
-	}
+	unsigned short attribute = sprite->attribute1;
+	unsigned short constant = 0xdfff;
+	sprite->attribute1 = vertical(attribute, vertical_flip, constant);
 }
 
 unsigned short horizontal(unsigned short attribute, int flip, unsigned short constant);
 
-/* change the vertical flip flag */
+/* change the horizontal flip flag */
 void sprite_set_horizontal_flip(struct Sprite* sprite, int horizontal_flip) {
 	unsigned short attribute = sprite->attribute1;
-	unsigned short constant = 0xefff
+	unsigned short constant = 0xefff;
 	sprite->attribute1 = horizontal(attribute, horizontal_flip, constant);
 }
 
