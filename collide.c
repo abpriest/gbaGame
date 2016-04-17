@@ -14,10 +14,14 @@
 
 /* include the tile map we are using */
 #include "map.h"
+#include "sky.h"
 
 /* the tile mode flags needed for display control register */
 #define MODE0 0x00
 #define BG0_ENABLE 0x100
+#define BG1_ENABLE 0x200
+#define BG2_ENABLE 0x400
+#define BG3_ENABLE 0x800
 
 /* flags to set sprite handling in display control register */
 #define SPRITE_MAP_2D 0x0
@@ -27,6 +31,9 @@
 
 /* the control registers for the four tile layers */
 volatile unsigned short* bg0_control = (volatile unsigned short*) 0x4000008;
+volatile unsigned short* bg1_control = (volatile unsigned short*) 0x400000a;
+volatile unsigned short* bg2_control = (volatile unsigned short*) 0x400000c;
+volatile unsigned short* bg3_control = (volatile unsigned short*) 0x400000e;
 
 /* palette is always 256 colors */
 #define PALETTE_SIZE 256
@@ -55,6 +62,13 @@ volatile unsigned short* buttons = (volatile unsigned short*) 0x04000130;
 /* scrolling registers for backgrounds */
 volatile short* bg0_x_scroll = (unsigned short*) 0x4000010;
 volatile short* bg0_y_scroll = (unsigned short*) 0x4000012;
+volatile short* bg1_x_scroll = (unsigned short*) 0x4000014;
+volatile short* bg1_y_scroll = (unsigned short*) 0x4000016;
+volatile short* bg2_x_scroll = (unsigned short*) 0x4000018;
+volatile short* bg2_y_scroll = (unsigned short*) 0x400001a;
+volatile short* bg3_x_scroll = (unsigned short*) 0x400001c;
+volatile short* bg3_y_scroll = (unsigned short*) 0x400001e;
+
 
 /* the bit positions indicate each button - the first bit is for A, second for
  * B, and so on, each constant below can be ANDED into the register to get the
@@ -147,8 +161,18 @@ void setup_background() {
 		(1 << 13) |	   /* wrapping flag */
 		(0 << 14);		/* bg size, 0 is 256x256 */
 
+	*bg1_control = 3 |    /* priority, 0 is highest, 3 is lowest */
+		(0 << 2)  |       /* the char block the image data is stored in */
+		(0 << 6)  |       /* the mosaic flag */
+		(1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
+		(18 << 8) |       /* the screen block the tile data is stored in */
+		(1 << 13) |       /* wrapping flag */
+		(0 << 14);        /* bg size, 0 is 256x256 */
+	
 	/* load the tile data into screen block 16 */
 	memcpy16_dma((unsigned short*) screen_block(16), (unsigned short*) map, map_width * map_height);
+
+	memcpy16_dma((unsigned short*) screen_block(18), (unsigned short*) sky, sky_width * sky_height);
 }
 
 /* just kill time */
@@ -515,7 +539,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 /* the main function */
 int main( ) {
 	/* we set the mode to mode 0 with bg0 on */
-	*display_control = MODE0 | BG0_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
+	*display_control = MODE0 | BG0_ENABLE | BG1_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
 
 	/* setup the background 0 */
 	setup_background();
@@ -559,6 +583,7 @@ int main( ) {
 		/* wait for vblank before scrolling and moving sprites */
 		wait_vblank();
 		*bg0_x_scroll = xscroll;
+		*bg1_x_scroll = 2 * xscroll;
 		sprite_update_all();
 
 		/* delay some */
