@@ -9,8 +9,8 @@
 /* include the tile map we are using */
 #include "map.h"
 
-/* include the tile sky map we are using */
-#include "sky.h"
+/* include the tile foreground map we are using */
+#include "foreground.h"
 
 /* the width and height of the screen */
 #define WIDTH 240
@@ -126,7 +126,7 @@ void setup_background() {
     }
 
     /* set all control the bits in this register */
-    *bg0_control = 0 |    /* priority, 0 is highest, 3 is lowest */
+    *bg0_control = 3 |    /* priority, 0 is highest, 3 is lowest */
         (0 << 2)  |       /* the char block the image data is stored in */
         (0 << 6)  |       /* the mosaic flag */
         (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
@@ -134,7 +134,7 @@ void setup_background() {
         (1 << 13) |       /* wrapping flag */
         (0 << 14);        /* bg size, 0 is 256x256 */
 
-    *bg1_control = 3 |    /* priority, 0 is highest, 3 is lowest */
+    *bg1_control = 0 |    /* priority, 0 is highest, 3 is lowest */
         (0 << 2)  |       /* the char block the image data is stored in */
         (0 << 6)  |       /* the mosaic flag */
         (1 << 7)  |       /* color mode, 0 is 16 colors, 1 is 256 colors */
@@ -148,8 +148,8 @@ void setup_background() {
         dest[i] = map[i];
     }
     dest = screen_block(18);
-    for (int i = 0; i < (sky_width * sky_height); i++) {
-        dest[i] = sky[i];
+    for (int i = 0; i < (foreground_width * foreground_height); i++) {
+        dest[i] = foreground[i];
     }
 }
 
