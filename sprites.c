@@ -394,7 +394,50 @@ void samus_stop(struct Samus* samus) {
 }
 
 /* update the samus */
-void samus_update(struct Samus* samus) {
+void samus_update(struct Samus* samus, int xscroll) {
+	/* update y position and speed if falling */
+	if (samus->falling) {
+		samus->y += samus->yvel;
+		samus->yvel += samus->gravity;
+	}
+
+	/* check which tile the samus's feet are over */
+	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+	unsigned short tileOver = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+	unsigned short tileRight = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
+			0, map, map_width, map_height);
+
+	/* if it's block tile
+	 * these numbers refer to the tile indices of the blocks the samus can walk on */
+	if ((tileUnder >= 2 && tileUnder <= 9) || 
+		(tileUnder >= 12 && tileUnder <= 25) ||
+		(tileUnder >= 30 && tileUnder <= 35)){
+		/* stop the fall! */
+		samus->falling = 0;
+		samus->yvel = 0;
+
+		/* make him line up with the top of a block
+		 * works by clearing out the lower bits to 0 */
+		samus->y &= ~0x7ff;
+
+		/* move him down one because there is a one pixel gap in the image */
+		samus->y++;
+	} else if ( (tileOver >= 2 && tileOver <= 9) || 
+				(tileOver >= 12 && tileOver <= 25) ||
+				(tileOver >= 30 && tileOver <= 35)){
+		samus->falling = 1;
+		samus->yvel = -samus->yvel;
+	} else {
+		/* she is falling now */
+		samus->falling = 1;
+	}
+
+
+	/* update animation if moving */
 	if (samus->move) {
 		samus->counter++;
 		if (samus->counter >= samus->animation_delay) {
@@ -406,9 +449,14 @@ void samus_update(struct Samus* samus) {
 			samus->counter = 0;
 		}
 	}
-
-	sprite_position(samus->sprite, samus->x, samus->y);
+	if (samus->falling) {
+		samus->frame = 64;
+		sprite_set_offset(samus->sprite, samus->frame);
+	}
+	/* set on screen position */
+	sprite_position(samus->sprite, samus->x >> 8, samus->y >> 8);
 }
+
 
 /* the main function */
 int main( ) {
