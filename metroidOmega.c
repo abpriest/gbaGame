@@ -6,7 +6,10 @@
 
 /* include the sprite image we are using */
 #include "samus.h"
-
+#include "lemon.h"
+#include "apple.h"
+#include "mushroom.h"
+#include "arrow.h"
 /* include the tile map we are using */
 #include "map.h"
 
