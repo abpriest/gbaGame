@@ -573,6 +573,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 	sprite_position(samus->sprite, samus->x >> 8, samus->y >> 8);
 }
 
+
 /* the main function */
 int main( ) {
 	/* we set the mode to mode 0 with bg0 on */
