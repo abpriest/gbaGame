@@ -362,6 +362,74 @@ void samus_init(struct Samus* samus) {
 	samus->sprite = sprite_init(samus->x >> 8, samus->y >> 8, SIZE_32_32, 0, 0, samus->frame, 0);
 }
 
+struct Mushroom {
+	/* the actual sprite attribute info */
+	struct Sprite* sprite;
+
+	/* the x and y postion, in 1/256 pixels */
+	int x, y;
+
+	/* whether the Mushroom is moving right now or not */
+	int move;
+
+	/* the number of pixels away from the edge of the screen the Mushroom stays */
+	int border;
+
+};
+
+/* initialize the mushrom */
+void Mushroom_init(struct Mushroom* mushroom, int xcoord) {
+	int r = rand() % 1
+	if(r == 1){
+		mushroom->x = xcoord << 8;
+		mushroom->move = 1;
+	}else {
+		mushroom->x = xcoord << 8;
+		mushroom->move = 0;
+	}
+	
+	mushroom->y = 113 << 8;
+	mushroom->border = 40;
+	
+	mushroom->sprite = sprite_init(mushroom->x >> 8, mushroom->y >> 8, SIZE_16_16, 0, 0, mushroom->frame, 0);
+}
+
+/* a struct for the Arrow's logic and behavior */
+struct Arrow {
+	/* the actual sprite attribute info */
+	struct Arrow* arrow;
+
+	/* the x and y postion, in 1/256 pixels */
+	int x, y;
+
+	/* whether the samus is moving right now or not */
+	int move;
+
+	/* the number of pixels away from the edge of the screen the arrow stays */
+	int border;
+};
+
+/* initialize the arrow */
+void arrow_init(struct Arrow* arrow, int ycoord, int xcoord) {
+	int r = rand() % 1
+	if(r == 1){
+		mushroom->x = xcoord << 8;
+		mushroom->y = ycoord << 8;
+		mushroom->move = 1;
+	}else {
+		mushroom->x = xcoord << 8;
+		mushroom->y = ycoord << 8;
+		mushroom->move = 0;
+	}
+	
+	arrow->border = 40;
+	arrow->frame = 0;
+	arrow->move = 0;
+	
+	
+	arrow->sprite = sprite_init(arrow->x >> 8, arrow->y >> 8, SIZE_8_8, 0, 0, arrow->frame, 0);
+}
+
 /* move the samus left or right returns if it is at edge of the screen */
 int samus_left(struct Samus* samus) {
 	/* face left */
