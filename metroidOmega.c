@@ -427,7 +427,7 @@ void arrow_init(struct Arrow* arrow, int ycoord, int xcoord) {
 
 /* move the samus left or right returns if it is at edge of the screen */
 int samus_left(struct Samus* samus, int xscroll) {
-	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8), xscroll,
+	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
 	if ( !((tileLeft >= 2 && tileLeft <= 9) || 
 		(tileLeft >= 12 && tileLeft <= 25) ||
@@ -539,9 +539,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 			0, map, map_width, map_height);
 	unsigned short tileRight = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
 			0, map, map_width, map_height);
-	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
-			0, map, map_width, map_height);
-
+	
 	/* if it's block tile
 	 * these numbers refer to the tile indices of the blocks the samus can walk on */
 	if ((tileUnder >= 2 && tileUnder <= 9) || 
@@ -617,11 +615,11 @@ int main( ) {
 
 		/* now the arrow keys move the samus */
 		if (button_pressed(BUTTON_RIGHT)) {
-			if (samus_right(&samus)) {
+			if (samus_right(&samus, xscroll)) {
 				xscroll++;
 			}
 		} else if (button_pressed(BUTTON_LEFT)) {
-			if (samus_left(&samus)) {
+			if (samus_left(&samus, xscroll)) {
 				xscroll--;
 			}
 		} else {
