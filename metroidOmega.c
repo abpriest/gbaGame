@@ -1,8 +1,3 @@
-/*
- * collide.c
- * program which demonstrates sprites colliding with tiles
- */
-
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 160
 

@@ -1,6 +1,6 @@
 @ horizontal.s
 .global horizontal
-horizonal:
+horizontal:
         @r0 = sprite attribute
         @r1 = boolean to flip
         @r2 = the hex value to check against
