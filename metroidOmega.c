@@ -1,15 +1,14 @@
 #define SCREEN_WIDTH 240
 #define SCREEN_HEIGHT 160
 
+#include <stdlib.h>
+
 /* include the background image we are using */
 #include "background.h"
 
 /* include the sprite image we are using */
-#include "samus.h"
-#include "lemon.h"
-#include "apple.h"
-#include "mushroom.h"
-#include "arrow.h"
+#include "spriteSheet.h"
+
 /* include the tile map we are using */
 #include "map.h"
 
@@ -308,10 +307,10 @@ void sprite_set_offset(struct Sprite* sprite, int offset) {
 /* setup the sprite image and palette */
 void setup_sprite_image() {
 	/* load the palette from the image into palette memory*/
-	memcpy16_dma((unsigned short*) sprite_palette, (unsigned short*) samus_palette, PALETTE_SIZE);
+	memcpy16_dma((unsigned short*) sprite_palette, (unsigned short*) spriteSheet_palette, PALETTE_SIZE);
 
 	/* load the image into char block 0 */
-	memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) samus_data, (samus_width * samus_height) / 2);
+	memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) spriteSheet_data, (spriteSheet_width * spriteSheet_height) / 2);
 }
 
 /* a struct for the samus's logic and behavior */
@@ -379,7 +378,7 @@ struct Mushroom {
 
 /* initialize the mushrom */
 void Mushroom_init(struct Mushroom* mushroom, int xcoord) {
-	int r = rand() % 1
+	int r = rand() % 1;
 	if(r == 1){
 		mushroom->x = xcoord << 8;
 		mushroom->move = 1;
@@ -391,13 +390,13 @@ void Mushroom_init(struct Mushroom* mushroom, int xcoord) {
 	mushroom->y = 113 << 8;
 	mushroom->border = 40;
 	
-	mushroom->sprite = sprite_init(mushroom->x >> 8, mushroom->y >> 8, SIZE_16_16, 0, 0, mushroom->frame, 0);
+	mushroom->sprite = sprite_init(mushroom->x >> 8, mushroom->y >> 8, SIZE_16_16, 0, 0, 67, 0);
 }
 
 /* a struct for the Arrow's logic and behavior */
 struct Arrow {
 	/* the actual sprite attribute info */
-	struct Arrow* arrow;
+	struct Sprite* sprite;
 
 	/* the x and y postion, in 1/256 pixels */
 	int x, y;
@@ -411,23 +410,19 @@ struct Arrow {
 
 /* initialize the arrow */
 void arrow_init(struct Arrow* arrow, int ycoord, int xcoord) {
-	int r = rand() % 1
+	int r = rand() % 1;
 	if(r == 1){
-		mushroom->x = xcoord << 8;
-		mushroom->y = ycoord << 8;
-		mushroom->move = 1;
+		arrow->x = xcoord << 8;
+		arrow->y = ycoord << 8;
+		arrow->move = 1;
 	}else {
-		mushroom->x = xcoord << 8;
-		mushroom->y = ycoord << 8;
-		mushroom->move = 0;
+		arrow->x = xcoord << 8;
+		arrow->y = ycoord << 8;
+		arrow->move = 0;
 	}
-	
 	arrow->border = 40;
-	arrow->frame = 0;
-	arrow->move = 0;
 	
-	
-	arrow->sprite = sprite_init(arrow->x >> 8, arrow->y >> 8, SIZE_8_8, 0, 0, arrow->frame, 0);
+	arrow->sprite = sprite_init(arrow->x >> 8, arrow->y >> 8, SIZE_8_8, 0, 0, 66, 0);
 }
 
 /* move the samus left or right returns if it is at edge of the screen */
