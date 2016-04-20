@@ -426,34 +426,49 @@ void arrow_init(struct Arrow* arrow, int ycoord, int xcoord) {
 }
 
 /* move the samus left or right returns if it is at edge of the screen */
-int samus_left(struct Samus* samus) {
-	/* face left */
-	sprite_set_horizontal_flip(samus->sprite, 1);
-	samus->move = 1;
-
-	/* if we are at the left end, just scroll the screen */
-	if ((samus->x >> 8) < samus->border) {
-		return 1;
-	} else {
-		/* else move left */
-		samus->x -= 256;
-		return 0;
+int samus_left(struct Samus* samus, int xscroll) {
+	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+	if ( !((tileLeft >= 2 && tileLeft <= 9) || 
+		(tileLeft >= 12 && tileLeft <= 25) ||
+		(tileLeft >= 30 && tileLeft <= 35))){
+		
+		/* face left */
+		sprite_set_horizontal_flip(samus->sprite, 1);
+		samus->move = 1;
+			
+		/* if we are at the left end, just scroll the screen */
+		if ((samus->x >> 8) < samus->border) {
+			return 1;
+		} else {
+			/* else move left */
+			samus->x -= 256;
+			return 0;
+		}
 	}
 }
-int samus_right(struct Samus* samus) {
-	/* face right */
-	sprite_set_horizontal_flip(samus->sprite, 0);
-	samus->move = 1;
-
-	/* if we are at the right end, just scroll the screen */
-	if ((samus->x >> 8) > (SCREEN_WIDTH - 16 - samus->border)) {
-		return 1;
-	} else {
-		/* else move right */
-		samus->x += 256;
-		return 0;
+int samus_right(struct Samus* samus, int xscroll) {
+	unsigned short tileRight = tile_lookup((samus->x >> 8) + 24, (samus->y >> 8), xscroll,
+			0, map, map_width, map_height);
+	if ( !((tileRight >= 2 && tileRight <= 9) || 
+		(tileRight >= 12 && tileRight <= 25) ||
+		(tileRight >= 30 && tileRight <= 35))){
+			
+		/* face right */
+		sprite_set_horizontal_flip(samus->sprite, 0);
+		samus->move = 1;
+			
+		/* if we are at the right end, just scroll the screen */
+		if ((samus->x >> 8) > (SCREEN_WIDTH - 16 - samus->border)) {
+			return 1;
+		} else {
+			/* else move right */
+			samus->x += 256;
+			return 0;
+		}
 	}
 }
+
 
 /* stop the samus from walking left/right */
 void samus_stop(struct Samus* samus) {
@@ -572,6 +587,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 	/* set on screen position */
 	sprite_position(samus->sprite, samus->x >> 8, samus->y >> 8);
 }
+
 
 /* the main function */
 int main( ) {
