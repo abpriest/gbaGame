@@ -17,8 +17,8 @@
 /* the tile mode flags needed for display control register */
 #define MODE0 0x00
 #define BG0_ENABLE 0x100
-#define BG1_ENABLE 0x100
-#define BG2_ENABLE 0x100
+#define BG1_ENABLE 0x200
+#define BG2_ENABLE 0x400
 
 /* flags to set sprite handling in display control register */
 #define SPRITE_MAP_2D 0x0
@@ -59,7 +59,9 @@ volatile unsigned short* buttons = (volatile unsigned short*) 0x04000130;
 volatile short* bg0_x_scroll = (unsigned short*) 0x4000010;
 volatile short* bg0_y_scroll = (unsigned short*) 0x4000012;
 volatile short* bg1_x_scroll = (unsigned short*) 0x4000014;
-volatile short* bg2_x_scroll = (unsigned short*) 0x4000016;
+volatile short* bg1_y_scroll = (unsigned short*) 0x4000016;
+volatile short* bg2_x_scroll = (unsigned short*) 0x4000018;
+volatile short* bg2_y_scroll = (unsigned short*) 0x400001a;
 
 /* the bit positions indicate each button - the first bit is for A, second for
  * B, and so on, each constant below can be ANDED into the register to get the
@@ -153,25 +155,27 @@ void setup_background() {
 		(0 << 14);		/* bg size, 0 is 256x256 */
 
 	/* set all control the bits in this register */
-	*bg1_control = 0 |	/* priority, 0 is highest, 3 is lowest */
+	*bg1_control = 2 |	/* priority, 0 is highest, 3 is lowest */
 		(0 << 2)  |	   /* the char block the image data is stored in */
 		(0 << 6)  |	   /* the mosaic flag */
 		(1 << 7)  |	   /* color mode, 0 is 16 colors, 1 is 256 colors */
-		(16 << 8) |	   /* the screen block the tile data is stored in */
+		(18 << 8) |	   /* the screen block the tile data is stored in */
 		(1 << 13) |	   /* wrapping flag */
 		(0 << 14);		/* bg size, 0 is 256x256 */
 
 	/* set all control the bits in this register */
-	*bg2_control = 0 |	/* priority, 0 is highest, 3 is lowest */
+	*bg2_control = 3 |	/* priority, 0 is highest, 3 is lowest */
 		(0 << 2)  |	   /* the char block the image data is stored in */
 		(0 << 6)  |	   /* the mosaic flag */
 		(1 << 7)  |	   /* color mode, 0 is 16 colors, 1 is 256 colors */
-		(16 << 8) |	   /* the screen block the tile data is stored in */
+		(20 << 8) |	   /* the screen block the tile data is stored in */
 		(1 << 13) |	   /* wrapping flag */
 		(0 << 14);		/* bg size, 0 is 256x256 */
 
 	/* load the tile data into screen block 16 */
 	memcpy16_dma((unsigned short*) screen_block(16), (unsigned short*) foreground, foreground_width * foreground_height);
+	memcpy16_dma((unsigned short*) screen_block(18), (unsigned short*) middleground, middleground_width * middleground_height);
+	memcpy16_dma((unsigned short*) screen_block(20), (unsigned short*) background, background_width * background_height);
 }
 
 /* just kill time */
@@ -621,7 +625,7 @@ void samus_update(struct Samus* samus, int xscroll) {
 /* the main function */
 int main( ) {
 	/* we set the mode to mode 0 with bg0 on */
-	*display_control = MODE0 | BG0_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
+	*display_control = MODE0 | BG0_ENABLE | BG1_ENABLE | BG2_ENABLE | SPRITE_ENABLE | SPRITE_MAP_1D;
 
 	/* setup the background 0 */
 	setup_background();
@@ -665,6 +669,8 @@ int main( ) {
 		/* wait for vblank before scrolling and moving sprites */
 		wait_vblank();
 		*bg0_x_scroll = xscroll;
+		*bg1_x_scroll = xscroll*1.5;
+		*bg2_x_scroll = xscroll*2;
 		sprite_update_all();
 
 		/* delay some */
