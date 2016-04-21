@@ -4,17 +4,21 @@
 #include <stdlib.h>
 
 /* include the background image we are using */
-#include "background.h"
+#include "bgTiles.h"
 
 /* include the sprite image we are using */
 #include "spriteSheet.h"
 
 /* include the tile map we are using */
-#include "map.h"
+#include "foreground.h"
+#include "middleground.h"
+#include "background.h"
 
 /* the tile mode flags needed for display control register */
 #define MODE0 0x00
 #define BG0_ENABLE 0x100
+#define BG1_ENABLE 0x100
+#define BG2_ENABLE 0x100
 
 /* flags to set sprite handling in display control register */
 #define SPRITE_MAP_2D 0x0
@@ -24,6 +28,8 @@
 
 /* the control registers for the four tile layers */
 volatile unsigned short* bg0_control = (volatile unsigned short*) 0x4000008;
+volatile unsigned short* bg1_control = (volatile unsigned short*) 0x400000a;
+volatile unsigned short* bg2_control = (volatile unsigned short*) 0x400000c;
 
 /* palette is always 256 colors */
 #define PALETTE_SIZE 256
@@ -52,6 +58,8 @@ volatile unsigned short* buttons = (volatile unsigned short*) 0x04000130;
 /* scrolling registers for backgrounds */
 volatile short* bg0_x_scroll = (unsigned short*) 0x4000010;
 volatile short* bg0_y_scroll = (unsigned short*) 0x4000012;
+volatile short* bg1_x_scroll = (unsigned short*) 0x4000014;
+volatile short* bg2_x_scroll = (unsigned short*) 0x4000016;
 
 /* the bit positions indicate each button - the first bit is for A, second for
  * B, and so on, each constant below can be ANDED into the register to get the
@@ -129,11 +137,11 @@ void memcpy16_dma(unsigned short* dest, unsigned short* source, int amount) {
 void setup_background() {
 
 	/* load the palette from the image into palette memory*/
-	memcpy16_dma((unsigned short*) bg_palette, (unsigned short*) background_palette, PALETTE_SIZE);
+	memcpy16_dma((unsigned short*) bg_palette, (unsigned short*) bgTiles_palette, PALETTE_SIZE);
 
 	/* load the image into char block 0 */
-	memcpy16_dma((unsigned short*) char_block(0), (unsigned short*) background_data,
-			(background_width * background_height) / 2);
+	memcpy16_dma((unsigned short*) char_block(0), (unsigned short*) bgTiles_data,
+			(bgTiles_width * bgTiles_height) / 2);
 
 	/* set all control the bits in this register */
 	*bg0_control = 0 |	/* priority, 0 is highest, 3 is lowest */
@@ -144,8 +152,26 @@ void setup_background() {
 		(1 << 13) |	   /* wrapping flag */
 		(0 << 14);		/* bg size, 0 is 256x256 */
 
+	/* set all control the bits in this register */
+	*bg1_control = 0 |	/* priority, 0 is highest, 3 is lowest */
+		(0 << 2)  |	   /* the char block the image data is stored in */
+		(0 << 6)  |	   /* the mosaic flag */
+		(1 << 7)  |	   /* color mode, 0 is 16 colors, 1 is 256 colors */
+		(16 << 8) |	   /* the screen block the tile data is stored in */
+		(1 << 13) |	   /* wrapping flag */
+		(0 << 14);		/* bg size, 0 is 256x256 */
+
+	/* set all control the bits in this register */
+	*bg2_control = 0 |	/* priority, 0 is highest, 3 is lowest */
+		(0 << 2)  |	   /* the char block the image data is stored in */
+		(0 << 6)  |	   /* the mosaic flag */
+		(1 << 7)  |	   /* color mode, 0 is 16 colors, 1 is 256 colors */
+		(16 << 8) |	   /* the screen block the tile data is stored in */
+		(1 << 13) |	   /* wrapping flag */
+		(0 << 14);		/* bg size, 0 is 256x256 */
+
 	/* load the tile data into screen block 16 */
-	memcpy16_dma((unsigned short*) screen_block(16), (unsigned short*) map, map_width * map_height);
+	memcpy16_dma((unsigned short*) screen_block(16), (unsigned short*) foreground, foreground_width * foreground_height);
 }
 
 /* just kill time */
@@ -475,7 +501,7 @@ void samus_stop(struct Samus* samus) {
 /* move the samus left or right returns if it is at edge of the screen */
 int samus_left(struct Samus* samus, int xscroll) {
 	unsigned short tileLeft = tile_lookup((samus->x >> 8) + 8, (samus->y >> 8) + 16, xscroll,
-			0, map, map_width, map_height);
+			0, foreground, foreground_width, foreground_height);
 	if ( !((tileLeft >= 2 && tileLeft <= 9) || 
 		(tileLeft >= 12 && tileLeft <= 25) ||
 		(tileLeft >= 30 && tileLeft <= 35))){
@@ -499,7 +525,7 @@ int samus_left(struct Samus* samus, int xscroll) {
 }
 int samus_right(struct Samus* samus, int xscroll) {
 	unsigned short tileRight = tile_lookup((samus->x >> 8) + 24, (samus->y >> 8) + 16, xscroll,
-			0, map, map_width, map_height);
+			0, foreground, foreground_width, foreground_height);
 	if ( !((tileRight >= 2 && tileRight <= 9) || 
 		(tileRight >= 12 && tileRight <= 25) ||
 		(tileRight >= 30 && tileRight <= 35))){
@@ -541,11 +567,9 @@ void samus_update(struct Samus* samus, int xscroll) {
 
 	/* check which tile the samus's feet are over */
 	unsigned short tileUnder = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
-			0, map, map_width, map_height);
+			0, foreground, foreground_width, foreground_height);
 	unsigned short tileOver = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8), xscroll,
-			0, map, map_width, map_height);
-	unsigned short tileRight = tile_lookup((samus->x >> 8) + 16, (samus->y >> 8) + 32, xscroll,
-			0, map, map_width, map_height);
+			0, foreground, foreground_width, foreground_height);
 	
 	/* if it's block tile
 	 * these numbers refer to the tile indices of the blocks the samus can walk on */
