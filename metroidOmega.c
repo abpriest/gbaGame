@@ -416,7 +416,7 @@ void samus_init(struct Samus* samus) {
 	samus->y = 113 << 8;
 	samus->yvel = 0;
 	samus->gravity = 50;
-	samus->border = 40;
+	samus->border = 60;
 	samus->frame = 0;
 	samus->move = 0;
 	samus->counter = 0;
@@ -432,29 +432,31 @@ struct Mushroom {
 	/* the x and y postion, in 1/256 pixels */
 	int x, y;
 
-	/* whether the Mushroom is moving right now or not */
-	int move;
-
-	/* the number of pixels away from the edge of the screen the Mushroom stays */
-	int border;
+	/* the speed of the mushroom used to change direction when it hits a block */
+	int xvel;
 
 };
 
 /* initialize the mushrom */
-void Mushroom_init(struct Mushroom* mushroom, int xcoord) {
-	int r = rand() % 1;
-	if(r == 1){
-		mushroom->x = xcoord << 8;
-		mushroom->move = 1;
-	}else {
-		mushroom->x = xcoord << 8;
-		mushroom->move = 0;
+void mushroom_init(struct Mushroom* mushroom, int xcoord) {
+	// int r = rand() % 2;
+	// mushroom->x = 24 <<8 // TODO: put this in main, don't hardcode it
+	mushroom->y = (16*8) <<8;
+	mushroom->x = xcoord*8 << 8;
+	
+	mushroom->sprite = sprite_init(mushroom->x >> 8, mushroom->y >> 8, SIZE_16_16, 0, 0, 134, 0);
+}
+
+/* update the shroom */
+void mushroom_update(struct Mushroom* mushroom, int xscroll) {
+	/* set on screen position */
+	unsigned short tileLeft = tile_lookup((mushroom->x >> 8) + 8, (mushroom->y >> 8) + 8, xscroll,
+			0, foreground, foreground_width, foreground_height);
+	if ( !((tileLeft >= 6 && tileLeft <= 7) || 
+		(tileLeft >= 16 && tileLeft <= 17))){	
+		mushroom->x -= 10;
 	}
-	
-	mushroom->y = 113 << 8;
-	mushroom->border = 40;
-	
-	mushroom->sprite = sprite_init(mushroom->x >> 8, mushroom->y >> 8, SIZE_16_16, 0, 0, 67, 0);
+	sprite_position(mushroom->sprite, mushroom->x >> 8, mushroom->y >> 8);
 }
 
 /* a struct for the Arrow's logic and behavior */
@@ -465,27 +467,14 @@ struct Arrow {
 	/* the x and y postion, in 1/256 pixels */
 	int x, y;
 
-	/* whether the samus is moving right now or not */
-	int move;
-
-	/* the number of pixels away from the edge of the screen the arrow stays */
-	int border;
+	/* the speed of the arrow */
+	int xvel;
 };
 
 /* initialize the arrow */
 void arrow_init(struct Arrow* arrow, int ycoord, int xcoord) {
-	int r = rand() % 1;
-	if(r == 1){
-		arrow->x = xcoord << 8;
-		arrow->y = ycoord << 8;
-		arrow->move = 1;
-	}else {
-		arrow->x = xcoord << 8;
-		arrow->y = ycoord << 8;
-		arrow->move = 0;
-	}
-	arrow->border = 40;
-	
+	arrow->x = xcoord << 8;
+	arrow->y = ycoord << 8;
 	arrow->sprite = sprite_init(arrow->x >> 8, arrow->y >> 8, SIZE_8_8, 0, 0, 66, 0);
 }
 
@@ -640,6 +629,10 @@ int main( ) {
 	struct Samus samus;
 	samus_init(&samus);
 
+	/* create the samus */
+	struct Mushroom mushroom;
+	mushroom_init(&mushroom, 24);
+
 	/* set initial scroll to 0 */
 	int xscroll = 0;
 
@@ -647,7 +640,7 @@ int main( ) {
 	while (1) {
 		/* update the samus */
 		samus_update(&samus, xscroll);
-
+		mushroom_update(&mushroom, xscroll);
 		/* now the arrow keys move the samus */
 		if (button_pressed(BUTTON_RIGHT)) {
 			if (samus_right(&samus, xscroll)) {
